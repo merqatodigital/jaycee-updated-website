@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Neon agent skills (installed locally, not shared)
+.claude/
+skills-lock.json

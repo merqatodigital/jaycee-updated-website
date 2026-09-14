@@ -2,5 +2,5 @@
   "name": "JayCee Trading & Services",
   "description": "Quality food and reliable supply delivered across Palawan. Imported meats, frozen seafood, dairy, and kitchen essentials for homes and businesses.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

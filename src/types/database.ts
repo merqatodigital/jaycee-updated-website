@@ -29,24 +29,4 @@ export interface FAQItem {
   category?: string;
 }
 
-export interface Database {
-  public: {
-    Tables: {
-      products: {
-        Row: Product;
-        Insert: Omit<Product, 'id'>;
-        Update: Partial<Omit<Product, 'id'>>;
-      };
-      inquiries: {
-        Row: WholesaleInquiry;
-        Insert: Omit<WholesaleInquiry, 'id' | 'created_at'>;
-        Update: Partial<WholesaleInquiry>;
-      };
-      faqs: {
-        Row: FAQItem;
-        Insert: FAQItem;
-        Update: Partial<FAQItem>;
-      };
-    };
-  };
-}
+
