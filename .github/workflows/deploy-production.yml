@@ -1,0 +1,52 @@
+name: Production Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  validate-and-test:
+    name: Production Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Type Check
+        run: npm run lint
+
+      - name: Run Unit Tests
+        run: npm run test
+
+      - name: Build Application for Production
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_APP_ENV: production
+          VITE_ORDER_URL: https://jaycee.palawancollective.com/
+
+  deploy-production:
+    name: Automated Deploy to Production
+    needs: validate-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production
+        run: |
+          echo "Deploying to Production at https://jaycee.palawancollective.com"
+          # Automated production release step
