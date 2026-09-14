@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Palette,
   Layout,
@@ -48,6 +48,54 @@ type AdminTab =
   | 'footer'
   | 'inquiries';
 
+type TabIcon = React.ComponentType<{ className?: string }>;
+
+interface AdminTabDef {
+  id: AdminTab;
+  label: string;
+  icon: TabIcon;
+  iconClass: string;
+}
+
+/** Single source of truth for the section nav — rendered as a vertical
+ *  sidebar on tablet/desktop and a horizontal swipeable strip on phones. */
+const ADMIN_TAB_GROUPS: { label: string; tabs: AdminTabDef[] }[] = [
+  {
+    label: 'Operations',
+    tabs: [
+      { id: 'inquiries', label: 'Wholesale Inquiries', icon: Inbox, iconClass: 'text-emerald-600' },
+    ],
+  },
+  {
+    label: 'Design & Global',
+    tabs: [
+      { id: 'theme', label: 'Colors & Fonts', icon: Palette, iconClass: 'text-amber-500' },
+      { id: 'header', label: 'Header & Navigation', icon: Layout, iconClass: 'text-blue-500' },
+      { id: 'hero', label: 'Hero Section', icon: Sparkles, iconClass: 'text-rose-500' },
+    ],
+  },
+  {
+    label: 'Sections & Content',
+    tabs: [
+      { id: 'categories', label: 'The JayCee Selection', icon: Layers, iconClass: 'text-emerald-600' },
+      { id: 'featured', label: 'Featured Range Cards', icon: Image, iconClass: 'text-purple-600' },
+      { id: 'stories', label: 'Editorial Stories', icon: Type, iconClass: 'text-indigo-600' },
+      { id: 'essentials', label: 'Everyday Essentials', icon: Layers, iconClass: 'text-teal-600' },
+      { id: 'company', label: 'Company Story & Pillars', icon: Sparkles, iconClass: 'text-amber-600' },
+      { id: 'location', label: 'Location & Directions', icon: MapPin, iconClass: 'text-rose-600' },
+      { id: 'faqs', label: 'FAQs Accordion', icon: HelpCircle, iconClass: 'text-sky-600' },
+      { id: 'ribbon', label: 'Culinary Photo Ribbon', icon: Image, iconClass: 'text-pink-600' },
+    ],
+  },
+  {
+    label: 'Extension & Footer',
+    tabs: [
+      { id: 'customSections', label: 'Custom Sections', icon: Plus, iconClass: 'text-emerald-500' },
+      { id: 'footer', label: 'Footer & Copyright', icon: Footprints, iconClass: 'text-stone-600' },
+    ],
+  },
+];
+
 export const AdminDashboard: React.FC = () => {
   const {
     content,
@@ -60,8 +108,22 @@ export const AdminDashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<AdminTab>('theme');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const tabStripRef = useRef<HTMLElement | null>(null);
+
+  // Keep the active pill centered in the mobile/tablet-portrait tab strip.
+  useEffect(() => {
+    const strip = tabStripRef.current;
+    if (!strip) return;
+    const activeEl = strip.querySelector('[data-active="true"]');
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ inline: 'center', block: 'nearest' });
+    }
+  }, [activeTab]);
 
   if (!isAdminPanelOpen) return null;
+
+  const displayLabel = (tab: AdminTabDef) =>
+    tab.id === 'customSections' ? `Custom Sections (${content.customSections.length})` : tab.label;
 
   const handleSaveNotify = () => {
     setSaveSuccess(true);
@@ -79,49 +141,56 @@ export const AdminDashboard: React.FC = () => {
     <div className="fixed inset-0 z-50 flex overflow-hidden bg-black/60 backdrop-blur-xs animate-in fade-in">
       <div className="w-full h-full flex flex-col bg-white overflow-hidden shadow-2xl">
         {/* Top App Bar */}
-        <header className="bg-[#1C1917] text-white px-6 py-4 flex items-center justify-between border-b border-stone-800 shrink-0">
-          <div className="flex items-center space-x-3">
-            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-            <h1 className="text-lg font-serif tracking-tight font-medium text-white flex items-center gap-2">
-              <span>JayCee Backoffice</span>
-              <span className="text-[10px] uppercase font-sans tracking-widest bg-stone-800 px-2 py-0.5 rounded text-amber-400 font-semibold border border-stone-700">
+        <header className="bg-[#1C1917] text-white px-3 sm:px-6 py-2.5 sm:py-4 flex items-center justify-between gap-2 border-b border-stone-800 shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+            <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <h1 className="text-sm sm:text-lg font-serif tracking-tight font-medium text-white flex items-center gap-2 min-w-0">
+              <span className="truncate">JayCee Backoffice</span>
+              <span className="hidden sm:inline-block text-[10px] uppercase font-sans tracking-widest bg-stone-800 px-2 py-0.5 rounded text-amber-400 font-semibold border border-stone-700 shrink-0">
                 Live Admin Mode
               </span>
             </h1>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 sm:space-x-3 shrink-0">
             {saveSuccess && (
-              <span className="inline-flex items-center space-x-1 text-xs text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded border border-emerald-800">
+              <span
+                className="inline-flex items-center space-x-1 text-xs text-emerald-400 bg-emerald-950/60 px-2 sm:px-2.5 py-1 rounded border border-emerald-800"
+                title="Changes saved"
+              >
                 <Check className="w-3.5 h-3.5" />
-                <span>Changes saved</span>
+                <span className="hidden sm:inline">Changes saved</span>
               </span>
             )}
 
             <button
               type="button"
               onClick={handleResetConfirm}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded text-xs font-medium text-stone-300 hover:text-white hover:bg-stone-800 transition-colors"
+              className="inline-flex items-center justify-center space-x-1.5 p-2 sm:px-3 sm:py-1.5 rounded text-xs font-medium text-stone-300 hover:text-white hover:bg-stone-800 transition-colors"
               title="Reset to factory defaults"
+              aria-label="Reset to factory defaults"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Default</span>
+              <span className="hidden sm:inline">Reset Default</span>
             </button>
 
             <button
               type="button"
               onClick={closeAdminPanel}
-              className="inline-flex items-center space-x-1.5 bg-[#8B1D24] hover:bg-[#74151B] text-white px-3.5 py-1.5 rounded text-xs font-medium transition-all shadow"
+              className="inline-flex items-center justify-center space-x-1.5 p-2 sm:px-3.5 sm:py-1.5 bg-[#8B1D24] hover:bg-[#74151B] text-white rounded text-xs font-medium transition-all shadow"
+              title="Preview the live site"
+              aria-label="Preview the live site"
             >
               <Eye className="w-3.5 h-3.5" />
-              <span>Preview Site</span>
+              <span className="hidden sm:inline">Preview Site</span>
             </button>
 
             <button
               type="button"
               onClick={logoutAdmin}
-              className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded transition-colors"
+              className="p-2 sm:p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded transition-colors"
               title="Log out from Backoffice"
+              aria-label="Log out from Backoffice"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -129,213 +198,96 @@ export const AdminDashboard: React.FC = () => {
             <button
               type="button"
               onClick={closeAdminPanel}
-              className="p-1 text-stone-400 hover:text-white hover:bg-stone-800 rounded transition-colors"
+              className="p-2 sm:p-1 text-stone-400 hover:text-white hover:bg-stone-800 rounded transition-colors"
+              aria-label="Close admin panel"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </header>
 
+        {/* Horizontal section switcher — phones & portrait tablets */}
+        <nav
+          ref={tabStripRef}
+          aria-label="Dashboard sections"
+          className="md:hidden shrink-0 overflow-x-auto overscroll-x-contain bg-stone-100 border-b border-stone-200"
+        >
+          <div className="flex items-center gap-1.5 w-max px-3 py-2">
+            {ADMIN_TAB_GROUPS.map((group) => (
+              <React.Fragment key={group.label}>
+                <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-stone-400 whitespace-nowrap pl-1" aria-hidden="true">
+                  {group.label}
+                </span>
+                {group.tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      data-active={isActive || undefined}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1.5 rounded-full text-[11px] font-medium border transition-colors ${
+                        isActive
+                          ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                          : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-amber-400' : tab.iconClass}`} />
+                      <span>{displayLabel(tab)}</span>
+                    </button>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </div>
+        </nav>
+
         {/* Workspace Body: Sidebar Tabs + Content Area */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Navigation Sidebar */}
-          <aside className="w-64 bg-stone-50 border-r border-stone-200 overflow-y-auto shrink-0 p-3 space-y-1">
-            <div className="px-3 py-2 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
-              Operations
+          {/* Left Navigation Sidebar — tablet & desktop */}
+          <aside className="hidden md:flex md:flex-col md:w-48 lg:w-64 bg-stone-50 border-r border-stone-200 overflow-y-auto shrink-0 p-2 lg:p-3">
+            <div className="space-y-1 pb-2">
+              {ADMIN_TAB_GROUPS.map((group) => (
+                <React.Fragment key={group.label}>
+                  <div className="px-3 pt-4 pb-1 first:pt-1 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
+                    {group.label}
+                  </div>
+                  {group.tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-[11px] lg:text-xs font-medium transition-all ${
+                          isActive
+                            ? 'bg-stone-900 text-white shadow-xs'
+                            : 'text-stone-700 hover:bg-stone-200/70'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 shrink-0 ${tab.iconClass}`} />
+                        <span className="truncate">{displayLabel(tab)}</span>
+                      </button>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </div>
-
-            <button
-              onClick={() => setActiveTab('inquiries')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'inquiries'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Inbox className="w-4 h-4 text-emerald-600" />
-              <span>Wholesale Inquiries</span>
-            </button>
-
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
-              Design & Global
-            </div>
-
-            <button
-              onClick={() => setActiveTab('theme')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'theme'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Palette className="w-4 h-4 text-amber-500" />
-              <span>Colors & Fonts</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('header')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'header'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Layout className="w-4 h-4 text-blue-500" />
-              <span>Header & Navigation</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('hero')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'hero'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-rose-500" />
-              <span>Hero Section</span>
-            </button>
-
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
-              Sections & Content
-            </div>
-
-            <button
-              onClick={() => setActiveTab('categories')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'categories'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Layers className="w-4 h-4 text-emerald-600" />
-              <span>The JayCee Selection</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('featured')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'featured'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Image className="w-4 h-4 text-purple-600" />
-              <span>Featured Range Cards</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('stories')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'stories'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Type className="w-4 h-4 text-indigo-600" />
-              <span>Editorial Stories (3 Rows)</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('essentials')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'essentials'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Layers className="w-4 h-4 text-teal-600" />
-              <span>Everyday Essentials</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('company')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'company'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span>Company Story & Pillars</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('location')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'location'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <MapPin className="w-4 h-4 text-rose-600" />
-              <span>Location & Directions</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('faqs')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'faqs'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <HelpCircle className="w-4 h-4 text-sky-600" />
-              <span>FAQs Accordion</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('ribbon')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'ribbon'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Image className="w-4 h-4 text-pink-600" />
-              <span>Culinary Photo Ribbon</span>
-            </button>
-
-            <div className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
-              Extension & Footer
-            </div>
-
-            <button
-              onClick={() => setActiveTab('customSections')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'customSections'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Plus className="w-4 h-4 text-emerald-500" />
-              <span>Add Custom Sections ({content.customSections.length})</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('footer')}
-              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'footer'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-700 hover:bg-stone-200/70'
-              }`}
-            >
-              <Footprints className="w-4 h-4 text-stone-600" />
-              <span>Footer & Copyright</span>
-            </button>
           </aside>
 
           {/* Right Main Form Panel */}
-          <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-stone-100/60">
-            <div className="max-w-4xl mx-auto space-y-6">
+          <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-stone-100/60">
+            <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
               {/* Operations: Wholesale Inquiries (Neon-backed) */}
               {activeTab === 'inquiries' && <InquiriesPanel />}
 
               {/* TAB 1: Theme & Color Palette & Fonts */}
               {activeTab === 'theme' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-serif text-stone-900">Color Palette & Fonts</h2>
+                    <h2 className="text-lg sm:text-xl font-serif text-stone-900">Color Palette & Fonts</h2>
                     <p className="text-xs text-stone-500 mt-1">
                       Customize your brand colors, primary action buttons, and typography pairing. Changes take effect immediately.
                     </p>
@@ -490,7 +442,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   {/* Preview swatch */}
-                  <div className="p-4 rounded-lg bg-stone-50 border border-stone-200 flex items-center justify-between">
+                  <div className="p-4 rounded-lg bg-stone-50 border border-stone-200 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <span className="text-xs text-stone-500 block">Current Button Preview:</span>
                       <button
@@ -503,7 +455,7 @@ export const AdminDashboard: React.FC = () => {
                         Explore Products Example
                       </button>
                     </div>
-                    <div className="text-right">
+                    <div className="sm:text-right">
                       <span className="text-xs text-stone-500 block">Typography Preview:</span>
                       <h4
                         className="text-lg"
@@ -518,9 +470,9 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 2: Header & Navigation */}
               {activeTab === 'header' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-serif text-stone-900">Header & Navigation Bar</h2>
+                    <h2 className="text-lg sm:text-xl font-serif text-stone-900">Header & Navigation Bar</h2>
                     <p className="text-xs text-stone-500 mt-1">
                       Edit the top utility banner, telephone links, online store CTA, and navigation links.
                     </p>
@@ -631,7 +583,7 @@ export const AdminDashboard: React.FC = () => {
                       {(content.header?.navLinks || []).map((link, idx) => (
                         <div
                           key={link.id}
-                          className="flex items-center space-x-2 bg-stone-50 p-2 rounded-lg border border-stone-200"
+                          className="flex flex-col sm:flex-row sm:items-center gap-2 sm:space-x-2 bg-stone-50 p-2 rounded-lg border border-stone-200"
                         >
                           <input
                             type="text"
@@ -645,7 +597,7 @@ export const AdminDashboard: React.FC = () => {
                               }));
                             }}
                             placeholder="Label"
-                            className="w-1/3 text-xs px-2.5 py-1.5 border border-stone-300 rounded bg-white"
+                            className="w-full sm:w-1/3 text-xs px-2.5 py-1.5 border border-stone-300 rounded bg-white"
                           />
                           <input
                             type="text"
@@ -670,7 +622,7 @@ export const AdminDashboard: React.FC = () => {
                                 header: { ...prev.header, navLinks: newLinks },
                               }));
                             }}
-                            className="p-1 text-stone-400 hover:text-red-600 rounded transition-colors"
+                            className="p-2 sm:p-1 self-end sm:self-auto text-stone-400 hover:text-red-600 rounded transition-colors"
                             title="Delete link"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -684,9 +636,9 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 3: Hero Section */}
               {activeTab === 'hero' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-serif text-stone-900">Hero Section</h2>
+                    <h2 className="text-lg sm:text-xl font-serif text-stone-900">Hero Section</h2>
                     <p className="text-xs text-stone-500 mt-1">
                       Customize the hero badge, headline, subtext, call-to-action buttons, and background photography.
                     </p>
@@ -862,10 +814,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 4: The JayCee Selection Categories */}
               {activeTab === 'categories' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">The JayCee Selection Carousel</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">The JayCee Selection Carousel</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Add, edit, reorder or remove product categories displayed in the carousel.
                       </p>
@@ -964,10 +916,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 5: Featured Range Cards */}
               {activeTab === 'featured' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">Featured Range Cards (3 Columns)</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">Featured Range Cards (3 Columns)</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Edit the badges, titles, images, and links on the 3 primary showcase cards.
                       </p>
@@ -1083,10 +1035,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 6: Editorial Stories */}
               {activeTab === 'stories' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">Editorial Stories ("From Our Shelves...")</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">Editorial Stories ("From Our Shelves...")</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Edit each staggered narrative story row with images from your device.
                       </p>
@@ -1122,7 +1074,7 @@ export const AdminDashboard: React.FC = () => {
                     {content.editorialStories.map((story, idx) => (
                       <div
                         key={story.id}
-                        className="border border-stone-200 rounded-lg p-5 bg-stone-50 space-y-4"
+                        className="border border-stone-200 rounded-lg p-4 sm:p-5 bg-stone-50 space-y-4"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-stone-800">
@@ -1260,10 +1212,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 7: Everyday Essentials */}
               {activeTab === 'essentials' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">Everyday Essentials Grid</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">Everyday Essentials Grid</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Edit titles, descriptions, and uploaded images for the 3 essentials cards.
                       </p>
@@ -1361,9 +1313,9 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 8: Company Story & Pillars */}
               {activeTab === 'company' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-serif text-stone-900">Locally Rooted & Company Pillars</h2>
+                    <h2 className="text-lg sm:text-xl font-serif text-stone-900">Locally Rooted & Company Pillars</h2>
                     <p className="text-xs text-stone-500 mt-1">
                       Edit the narrative, founding year callout, and 4 feature pillars.
                     </p>
@@ -1502,9 +1454,9 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 9: Location & Directions */}
               {activeTab === 'location' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-serif text-stone-900">Location & Storefront Details</h2>
+                    <h2 className="text-lg sm:text-xl font-serif text-stone-900">Location & Storefront Details</h2>
                     <p className="text-xs text-stone-500 mt-1">
                       Update your storefront address, travel distances, store hours, and storefront photo.
                     </p>
@@ -1595,10 +1547,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 10: FAQs */}
               {activeTab === 'faqs' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">Frequently Asked Questions</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">Frequently Asked Questions</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Manage Q&A items displayed in the interactive accordion.
                       </p>
@@ -1683,10 +1635,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 11: Photo Ribbon */}
               {activeTab === 'ribbon' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">Culinary Photo Ribbon</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">Culinary Photo Ribbon</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Update the edge-to-edge culinary gallery photos from your device or via URL.
                       </p>
@@ -1763,10 +1715,10 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 12: Add Custom Sections */}
               {activeTab === 'customSections' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-xl font-serif text-stone-900">Add & Manage Custom Sections</h2>
+                      <h2 className="text-lg sm:text-xl font-serif text-stone-900">Add & Manage Custom Sections</h2>
                       <p className="text-xs text-stone-500 mt-1">
                         Add brand-new sections to the page with custom headings, text, device images, and action buttons.
                       </p>
@@ -1814,7 +1766,7 @@ export const AdminDashboard: React.FC = () => {
                       {content.customSections.map((sec, idx) => (
                         <div
                           key={sec.id}
-                          className="border border-stone-200 rounded-xl p-5 bg-stone-50 space-y-4"
+                          className="border border-stone-200 rounded-xl p-4 sm:p-5 bg-stone-50 space-y-4"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-2">
@@ -1967,9 +1919,9 @@ export const AdminDashboard: React.FC = () => {
 
               {/* TAB 13: Footer */}
               {activeTab === 'footer' && (
-                <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
+                <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-6">
                   <div>
-                    <h2 className="text-xl font-serif text-stone-900">Footer Details</h2>
+                    <h2 className="text-lg sm:text-xl font-serif text-stone-900">Footer Details</h2>
                     <p className="text-xs text-stone-500 mt-1">
                       Update contact details, social links, opening hours, and copyright statement.
                     </p>
@@ -2148,7 +2100,7 @@ export const AdminDashboard: React.FC = () => {
                       {(content.footer?.exploreLinks || []).map((link, idx) => (
                         <div
                           key={link.id}
-                          className="flex items-center space-x-2 bg-stone-50 p-2 rounded-lg border border-stone-200"
+                          className="flex flex-col sm:flex-row sm:items-center gap-2 sm:space-x-2 bg-stone-50 p-2 rounded-lg border border-stone-200"
                         >
                           <input
                             type="text"
@@ -2162,7 +2114,7 @@ export const AdminDashboard: React.FC = () => {
                               }));
                             }}
                             placeholder="Label"
-                            className="w-1/3 text-xs px-2.5 py-1.5 border border-stone-300 rounded bg-white"
+                            className="w-full sm:w-1/3 text-xs px-2.5 py-1.5 border border-stone-300 rounded bg-white"
                           />
                           <input
                             type="text"
@@ -2187,7 +2139,7 @@ export const AdminDashboard: React.FC = () => {
                                 footer: { ...prev.footer, exploreLinks: newLinks },
                               }));
                             }}
-                            className="p-1.5 text-stone-400 hover:text-red-600 rounded"
+                            className="p-2 self-end sm:self-auto text-stone-400 hover:text-red-600 rounded"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>

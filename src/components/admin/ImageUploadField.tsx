@@ -57,11 +57,11 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
 
       {/* Preview if image exists */}
       {value?.trim() ? (
-        <div className="relative inline-block border border-stone-200 rounded-lg overflow-hidden bg-stone-100 max-h-48 group">
+        <div className="relative w-full sm:w-auto sm:inline-block border border-stone-200 rounded-lg overflow-hidden bg-stone-100 group">
           <img
             src={value}
             alt={label}
-            className="max-h-48 object-cover rounded-lg"
+            className="w-full sm:w-auto h-36 sm:h-auto max-h-48 object-cover rounded-lg"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }}
@@ -69,7 +69,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute top-2 right-2 bg-black/70 hover:bg-red-700 text-white p-1 rounded-full shadow transition-colors"
+            className="absolute top-2 right-2 bg-black/70 hover:bg-red-700 text-white p-1.5 sm:p-1 rounded-full shadow transition-colors"
             title="Remove image"
           >
             <X className="w-4 h-4" />
@@ -78,7 +78,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
       ) : null}
 
       {/* Input controls */}
-      <div className="flex items-center space-x-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
         <div className="relative flex-1">
           <input
             type="text"
@@ -101,7 +101,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
         <button
           type="button"
           onClick={handleTriggerUpload}
-          className="inline-flex items-center space-x-1.5 px-3 py-2 border border-stone-300 hover:border-stone-800 bg-stone-50 hover:bg-stone-100 text-stone-800 text-xs font-medium rounded-md transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center justify-center space-x-1.5 w-full sm:w-auto px-3 py-2 border border-stone-300 hover:border-stone-800 bg-stone-50 hover:bg-stone-100 text-stone-800 text-xs font-medium rounded-md transition-colors cursor-pointer shrink-0"
           title="Upload from device"
         >
           <Upload className="w-3.5 h-3.5 text-stone-600" />

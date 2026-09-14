@@ -14,10 +14,14 @@ import { WholesaleModal } from '../components/WholesaleModal';
 import { JayCeeLogo } from '../components/JayCeeLogo';
 import { BackToTop } from '../components/BackToTop';
 import { ORDER_ONLINE_URL, PHONE_NUMBER } from '../data/jayceeData';
+import { SiteContentProvider } from '../context/SiteContentContext';
+
+/** Renders a component inside SiteContentProvider, as App.tsx does in production. */
+const renderUI = (ui: React.ReactElement) => render(<SiteContentProvider>{ui}</SiteContentProvider>);
 
 describe('TopBar Component', () => {
   it('renders location and phone number correctly', () => {
-    render(<TopBar />);
+    renderUI(<TopBar />);
     expect(screen.getByText(/Puerto Princesa, Palawan/i)).toBeInTheDocument();
     expect(screen.getByText(/Serving local kitchens since 2017/i)).toBeInTheDocument();
     expect(screen.getByText(PHONE_NUMBER)).toBeInTheDocument();
@@ -26,7 +30,7 @@ describe('TopBar Component', () => {
 
 describe('Navbar Component', () => {
   it('renders brand logo and core navigation links', () => {
-    render(<Navbar />);
+    renderUI(<Navbar />);
     expect(screen.getByText('Products')).toBeInTheDocument();
     expect(screen.getByText('Wholesale')).toBeInTheDocument();
     expect(screen.getByText('Our story')).toBeInTheDocument();
@@ -35,7 +39,7 @@ describe('Navbar Component', () => {
   });
 
   it('links Order Online button directly to jaycee.palawancollective.com', () => {
-    render(<Navbar />);
+    renderUI(<Navbar />);
     const orderButtons = screen.getAllByRole('link', { name: /order/i });
     const primaryOrderBtn = orderButtons.find(
       (btn) => btn.getAttribute('href') === ORDER_ONLINE_URL
@@ -47,7 +51,7 @@ describe('Navbar Component', () => {
 
 describe('Hero Component', () => {
   it('renders hero headlines and value proposition', () => {
-    render(<Hero />);
+    renderUI(<Hero />);
     expect(screen.getByText(/Quality food/i)).toBeInTheDocument();
     expect(screen.getByText(/Reliable supply/i)).toBeInTheDocument();
     expect(screen.getByText(/Delivered across Palawan/i)).toBeInTheDocument();
@@ -55,7 +59,7 @@ describe('Hero Component', () => {
 
   it('triggers onWholesaleEnquiry when wholesale button is clicked', () => {
     const wholesaleMock = vi.fn();
-    render(<Hero onWholesaleEnquiry={wholesaleMock} />);
+    renderUI(<Hero onWholesaleEnquiry={wholesaleMock} />);
     const wholesaleBtn = screen.getByRole('button', { name: /wholesale enquiry/i });
     fireEvent.click(wholesaleBtn);
     expect(wholesaleMock).toHaveBeenCalledTimes(1);
@@ -64,7 +68,7 @@ describe('Hero Component', () => {
 
 describe('CategorySelection Component', () => {
   it('renders all categories from the JayCee selection', () => {
-    render(<CategorySelection />);
+    renderUI(<CategorySelection />);
     expect(screen.getByText('Everything your kitchen needs.')).toBeInTheDocument();
     expect(screen.getByText('Meats')).toBeInTheDocument();
     expect(screen.getByText('Seafood')).toBeInTheDocument();
@@ -75,7 +79,7 @@ describe('CategorySelection Component', () => {
 
   it('calls onSelectCategory when a category card is clicked', () => {
     const selectMock = vi.fn();
-    render(<CategorySelection onSelectCategory={selectMock} />);
+    renderUI(<CategorySelection onSelectCategory={selectMock} />);
     const meatsCard = screen.getByText('Meats');
     fireEvent.click(meatsCard);
     expect(selectMock).toHaveBeenCalledWith(expect.objectContaining({ id: 'meats' }));
@@ -84,7 +88,7 @@ describe('CategorySelection Component', () => {
 
 describe('LocationSection Component', () => {
   it('displays store address and travel times', () => {
-    render(<LocationSection />);
+    renderUI(<LocationSection />);
     expect(screen.getByText(/We've moved. Come find us./i)).toBeInTheDocument();
     expect(screen.getAllByText(/Osmeña Ave., B.M. Road, Puerto Princesa City, Palawan/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/City Proper/i)).toBeInTheDocument();
@@ -94,7 +98,7 @@ describe('LocationSection Component', () => {
 
 describe('FAQSection Component', () => {
   it('expands accordion answer when question is clicked', () => {
-    render(<FAQSection />);
+    renderUI(<FAQSection />);
     const questionButton = screen.getByRole('button', {
       name: /Do you deliver outside Puerto Princesa\?/i,
     });
@@ -110,13 +114,13 @@ describe('FAQSection Component', () => {
 
 describe('CTA & Online Store Buttons', () => {
   it('points OnlineStoreBanner CTA to the required URL', () => {
-    render(<OnlineStoreBanner />);
+    renderUI(<OnlineStoreBanner />);
     const storeLink = screen.getByRole('link', { name: /open online store/i });
     expect(storeLink.getAttribute('href')).toBe('https://jaycee.palawancollective.com/');
   });
 
   it('points PreFooterCTA button to the required URL', () => {
-    render(<PreFooterCTA />);
+    renderUI(<PreFooterCTA />);
     const orderLink = screen.getByRole('link', { name: /order online/i });
     expect(orderLink.getAttribute('href')).toBe('https://jaycee.palawancollective.com/');
   });
@@ -125,7 +129,7 @@ describe('CTA & Online Store Buttons', () => {
 describe('WholesaleModal Component', () => {
   it('renders form fields when open and handles input', () => {
     const closeMock = vi.fn();
-    render(<WholesaleModal isOpen={true} onClose={closeMock} />);
+    renderUI(<WholesaleModal isOpen={true} onClose={closeMock} />);
 
     expect(screen.getByText(/Wholesale Supply Enquiry/i)).toBeInTheDocument();
     const businessInput = screen.getByPlaceholderText(/e.g. El Nido Beach Resort/i);
@@ -136,7 +140,7 @@ describe('WholesaleModal Component', () => {
 
 describe('JayCeeLogo Component', () => {
   it('renders brand colors correctly: JAY in yellow, C in red, EE in black', () => {
-    render(<JayCeeLogo />);
+    renderUI(<JayCeeLogo />);
 
     const jayText = screen.getByText('JAY');
     const cText = screen.getByText('C');
@@ -158,7 +162,7 @@ describe('BackToTop Component', () => {
     const scrollToMock = vi.fn();
     window.scrollTo = scrollToMock;
 
-    render(<BackToTop />);
+    renderUI(<BackToTop />);
     const button = screen.getByRole('button', { name: /back to top/i });
     expect(button).toBeInTheDocument();
 
