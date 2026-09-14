@@ -85,10 +85,10 @@ export const InquiriesPanel: React.FC = () => {
   );
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-5">
-      <div className="flex items-start justify-between gap-4">
+    <div className="bg-white p-4 sm:p-6 rounded-xl border border-stone-200 shadow-xs space-y-4 sm:space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
-          <h2 className="text-xl font-serif text-stone-900 flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-serif text-stone-900 flex items-center gap-2">
             <Inbox className="w-5 h-5 text-emerald-600" />
             Wholesale Inquiries
           </h2>
@@ -161,7 +161,7 @@ export const InquiriesPanel: React.FC = () => {
             return (
               <div
                 key={q.id}
-                className="rounded-lg border border-stone-200 p-4 hover:border-stone-300 transition-colors"
+                className="rounded-lg border border-stone-200 p-3 sm:p-4 hover:border-stone-300 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                   <div className="min-w-0">
@@ -183,13 +183,13 @@ export const InquiriesPanel: React.FC = () => {
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
                       <a
                         href={`mailto:${q.email}`}
-                        className="inline-flex items-center gap-1 hover:text-stone-800"
+                        className="inline-flex items-center gap-1 min-w-0 break-all hover:text-stone-800"
                       >
                         <Mail className="w-3 h-3" /> {q.email}
                       </a>
                       <a
                         href={`tel:${q.phone}`}
-                        className="inline-flex items-center gap-1 hover:text-stone-800"
+                        className="inline-flex items-center gap-1 min-w-0 break-all hover:text-stone-800"
                       >
                         <Phone className="w-3 h-3" /> {q.phone}
                       </a>
@@ -206,7 +206,7 @@ export const InquiriesPanel: React.FC = () => {
                   </p>
                 )}
 
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-[10px] uppercase tracking-wide text-stone-400">
                     Set status:
                   </span>
