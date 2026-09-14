@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { SiteContentState } from '../types/siteContent';
 import { DEFAULT_SITE_CONTENT } from '../data/defaultSiteContent';
+import { fetchSiteContent, saveSiteContent, adminLogin, adminLogout } from '../lib/api';
 
 const STORAGE_KEY = 'jaycee_site_content_v1';
 const AUTH_KEY = 'jaycee_admin_auth_v1';
@@ -12,7 +13,7 @@ interface SiteContentContextType {
   updateContent: (updater: (prev: SiteContentState) => SiteContentState) => void;
   resetToDefault: () => void;
   isAdminLoggedIn: boolean;
-  loginAdmin: (passkey: string) => boolean;
+  loginAdmin: (passkey: string) => Promise<boolean>;
   logoutAdmin: () => void;
   isLoginModalOpen: boolean;
   openLoginModal: () => void;
@@ -158,13 +159,47 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setIsDarkMode((prev) => !prev);
   };
 
-  // Save changes to localStorage
+  // Tracks whether the initial remote fetch has completed, so we don't
+  // immediately push the local/default content back to the server before we've
+  // had a chance to load what's already stored in Neon.
+  const hydratedFromRemote = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // On mount, load the authoritative content from the Neon-backed API.
+  // Falls back silently to localStorage/defaults when the API is unavailable.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const remote = await fetchSiteContent();
+      if (!cancelled && remote && typeof remote === 'object') {
+        setContent((prev) => ({ ...prev, ...remote }));
+      }
+      hydratedFromRemote.current = true;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Save changes to localStorage (offline cache) and, debounced, to Neon.
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
     } catch (e) {
       console.error('Failed to save site content to localStorage:', e);
     }
+
+    // Avoid writing back to the server until after the first remote hydration.
+    if (!hydratedFromRemote.current) return;
+
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      void saveSiteContent(content);
+    }, 800);
+
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
   }, [content]);
 
   // Apply dynamic theme custom properties and font families
@@ -214,21 +249,27 @@ export const SiteContentProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } catch {}
   };
 
-  const loginAdmin = (passkey: string): boolean => {
-    if (passkey === ADMIN_PASSKEY) {
-      setIsAdminLoggedIn(true);
-      try {
-        sessionStorage.setItem(AUTH_KEY, 'true');
-      } catch {}
-      setIsLoginModalOpen(false);
-      setIsAdminPanelOpen(true);
-      return true;
+  const loginAdmin = async (passkey: string): Promise<boolean> => {
+    if (passkey !== ADMIN_PASSKEY) {
+      return false;
     }
-    return false;
+    // Best-effort: exchange the passkey for a server bearer token so protected
+    // API calls (inquiries, content writes) are authorized. If the API is
+    // unreachable the dashboard still opens for offline/local editing.
+    await adminLogin(passkey);
+
+    setIsAdminLoggedIn(true);
+    try {
+      sessionStorage.setItem(AUTH_KEY, 'true');
+    } catch {}
+    setIsLoginModalOpen(false);
+    setIsAdminPanelOpen(true);
+    return true;
   };
 
   const logoutAdmin = () => {
     setIsAdminLoggedIn(false);
+    adminLogout();
     try {
       sessionStorage.removeItem(AUTH_KEY);
     } catch {}

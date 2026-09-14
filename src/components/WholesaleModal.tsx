@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, Send, Phone } from 'lucide-react';
 import { PHONE_NUMBER, PHONE_TEL } from '../data/jayceeData';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { submitInquiry } from '../lib/api';
 import type { WholesaleInquiry } from '../types/database';
 
 interface WholesaleModalProps {
@@ -28,15 +28,8 @@ export const WholesaleModal: React.FC<WholesaleModalProps> = ({ isOpen, onClose 
     setSubmitting(true);
 
     try {
-      if (isSupabaseConfigured && supabase) {
-        // Ready for direct Supabase table insertion
-        await (supabase.from('inquiries') as any).insert([
-          {
-            ...formData,
-            status: 'pending',
-          },
-        ]);
-      }
+      // Persist the inquiry via the Neon-backed API.
+      await submitInquiry({ ...formData, status: 'pending' });
       // Simulate fast smooth submission
       setTimeout(() => {
         setSubmitting(false);

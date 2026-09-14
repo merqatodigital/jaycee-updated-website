@@ -18,9 +18,11 @@ import {
   Eye,
   LogOut,
   ExternalLink,
+  Inbox,
 } from 'lucide-react';
 import { useSiteContent } from '../../context/SiteContentContext';
 import { ImageUploadField } from './ImageUploadField';
+import { InquiriesPanel } from './InquiriesPanel';
 import type {
   CategoryItem,
   FeaturedRangeItem,
@@ -43,7 +45,8 @@ type AdminTab =
   | 'faqs'
   | 'ribbon'
   | 'customSections'
-  | 'footer';
+  | 'footer'
+  | 'inquiries';
 
 export const AdminDashboard: React.FC = () => {
   const {
@@ -138,6 +141,22 @@ export const AdminDashboard: React.FC = () => {
           {/* Left Navigation Sidebar */}
           <aside className="w-64 bg-stone-50 border-r border-stone-200 overflow-y-auto shrink-0 p-3 space-y-1">
             <div className="px-3 py-2 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
+              Operations
+            </div>
+
+            <button
+              onClick={() => setActiveTab('inquiries')}
+              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                activeTab === 'inquiries'
+                  ? 'bg-stone-900 text-white shadow-xs'
+                  : 'text-stone-700 hover:bg-stone-200/70'
+              }`}
+            >
+              <Inbox className="w-4 h-4 text-emerald-600" />
+              <span>Wholesale Inquiries</span>
+            </button>
+
+            <div className="px-3 pt-4 pb-1 text-[10px] font-bold tracking-[0.2em] text-stone-400 uppercase">
               Design & Global
             </div>
 
@@ -309,6 +328,9 @@ export const AdminDashboard: React.FC = () => {
           {/* Right Main Form Panel */}
           <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-stone-100/60">
             <div className="max-w-4xl mx-auto space-y-6">
+              {/* Operations: Wholesale Inquiries (Neon-backed) */}
+              {activeTab === 'inquiries' && <InquiriesPanel />}
+
               {/* TAB 1: Theme & Color Palette & Fonts */}
               {activeTab === 'theme' && (
                 <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-xs space-y-6">
